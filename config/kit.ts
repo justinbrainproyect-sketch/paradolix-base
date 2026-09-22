@@ -59,7 +59,7 @@ export const PIEZAS = [
     nombre: "Las cuentas, y el derecho al olvido",
     resumen: "Registrarse, entrar, recuperar la contraseña, el perfil y poder descargar o borrar lo propio.",
     paso: 2,
-    encendida: false,
+    encendida: true,
   },
   {
     id: "roles",
@@ -119,8 +119,8 @@ export const PIEZAS = [
   },
   {
     id: "traspaso",
-    nombre: "El traspaso del día 21",
-    resumen: "La entrega convertida en una lista que no deja saltarse un paso, con su documento.",
+    nombre: "La entrega del día 21",
+    resumen: "La entrega convertida en una lista que no deja saltarse un paso: qué contraseñas cambia el cliente y qué llaves tuyas revoca.",
     paso: 11,
     encendida: false,
   },

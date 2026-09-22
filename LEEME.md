@@ -28,6 +28,8 @@ Los cuatro comandos que se usan a diario:
 | `npm run build` | Compila como lo hará Vercel, y antes ejecuta los chequeos. |
 | `npm run typecheck` | Comprueba que los tipos cuadran. Rápido, y caza la mitad de los errores tontos. |
 | `npm run check:marca` · `check:secretos` | Las dos comprobaciones que rompen el build si algo se ha desmontado. Van solas dentro de `build`. |
+| `npm run migrar` | Pone la base de datos al día: aplica las migraciones que falten. |
+| `npm run check:cuentas` | La prueba de las cuentas contra el proyecto de verdad. Crea y borra cuentas, así que se lanza a mano. |
 
 ## Las dos costuras
 
@@ -94,16 +96,74 @@ el `.env.local`.
   compartir y el color de la barra del navegador en móvil.
 - Los dos entornos, con los datos de ejemplo y la protección de indexación.
 - `app/robots.ts` y `app/sitemap.ts`, que nadie recuerda poner hasta que hacen
-  falta y ya es tarde.
-- Los dos chequeos y el flujo de GitHub que los ejecuta en cada push.
+  falta y ya es tarde.- Los dos chequeos y el flujo de GitHub que los ejecuta en cada push.
 
-Y **nada de funcionalidad**, que es lo correcto en este paso: lo que se hace mal
-ahora se paga en cada proyecto siguiente.
+**El paso 2: las cuentas y el derecho al olvido.** Las tres tablas de la base —los
+negocios, las personas y quién pertenece a qué—, con sus cortafuegos y sus reglas,
+las migraciones que las ponen ahí, y una prueba que recorre el camino entero con dos
+personas de verdad. El detalle está más abajo, en *La base de datos*.
 
-Las once piezas que faltan están listadas en la propia página del esqueleto, y sale
+Y **nada más de funcionalidad todavía**: lo que se hace mal en la base se paga en
+cada proyecto siguiente, porque es la pieza que nadie vuelve a tocar.
+
+Las diez piezas que faltan están listadas en la propia página del esqueleto, y sale
 de `config/kit.ts`: encender una es poner su `encendida` en `true` y construirla.
-El orden y qué hace falta para cada una está en el plan, paso a paso, que vive en
-el repositorio del estudio (documento `KIT-0-PASO-A-PASO.md`).
+El orden y qué hace falta para cada una está en el plan, paso a paso, que vive en el
+repositorio del estudio (documento `KIT-0-PASO-A-PASO.md`).
+
+## La base de datos
+
+La primera pieza de verdad, construida y probada contra un proyecto de Supabase real.
+Son **tres tablas**, y cada una contesta una pregunta:
+
+| Tabla | Qué guarda |
+| --- | --- |
+| `negocios` | Un espacio de trabajo con su nombre. Un cliente puede tener dos: dos sedes, dos marcas. |
+| `perfiles` | Lo que se enseña de una persona. La cuenta de acceso la guarda Supabase aparte, en su esquema `auth`. |
+| `miembros` | Quién está en qué negocio y con qué papel: `dueno`, `admin` o `miembro`. |
+
+**La regla que lo gobierna todo:** sin fila en `miembros`, no se ve nada de ese
+negocio. No hay permiso por defecto ni para el dueño, así que la clave que viaja al
+navegador podría publicarse en la portada sin que cambiara nada: lo que decide es
+quién pregunta, fila por fila.
+
+Cada tabla tiene su cortafuegos encendido y sus reglas escritas, y las funciones que
+hacen falta **por dentro** —las que usan esas reglas, y la que crea el perfil al
+registrarse— viven en un esquema que no está publicado (`privado`). Así no son una
+puerta más de la API: por eso el auditor de seguridad del proyecto tiene tres avisos
+y no diez, y los tres que quedan son funciones que la aplicación llama a propósito.
+
+### Ponerla al día, y comprobarla
+
+```bash
+npm run migrar         # aplica las migraciones que falten, en orden
+npm run check:cuentas  # la prueba de verdad: dos personas, dos negocios, y a ver quién ve qué
+```
+
+La prueba se lanza a mano y no dentro del build, porque **crea y borra cuentas de
+verdad** y no tiene sentido que la compilación dependa de la red. Al terminar,
+comprueba que la base quedó con cero filas.
+
+### Las claves, y dónde viven
+
+- **`.freebuff/claves.txt`** — la dirección del proyecto y el token de Supabase, que
+  es lo que necesita `npm run migrar`.
+- **`.env.local`** — la dirección, la clave publicable y la del servidor, que es lo
+  que necesita la aplicación.
+
+Los dos están ignorados por git y `check:secretos` lo vigila. Dos cosas que costó
+aprender y conviene no volver a averiguar:
+
+- **El token necesita los permisos en «Read-write»**, no en «Read»: el de `Database`
+  y el de `Migrations`. Con el de lectura, la base recibe al script como
+  `supabase_read_only_user` y contesta «no puedo crear tablas en una transacción de
+  solo lectura», que suena a problema de la base cuando es del permiso. Por eso
+  `npm run migrar` comprueba el permiso **antes** de intentar nada y lo dice con esas
+  palabras.
+- **Este proyecto no acepta todavía la clave secreta nueva** (`sb_secret_`): la
+  rechaza en todos los servicios, también en el de las cuentas. La del servidor es la
+  clásica `service_role`, y por eso **no hay que desactivarla**. El día que Supabase
+  la acepte, se cambia el valor y no el nombre.
 
 ## Cómo nace un proyecto nuevo
 

@@ -10,9 +10,13 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "check:marca": "node scripts/check-marca.mjs",
-    "check:secretos": "node scripts/check-secretos.mjs"
+    "check:secretos": "node scripts/check-secretos.mjs",
+    "migrar": "node scripts/aplicar-migraciones.mjs",
+    "check:cuentas": "node scripts/check-cuentas.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.0",
     "next": "^16.3.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
