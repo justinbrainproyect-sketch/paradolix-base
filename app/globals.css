@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   De cuatro colores a un sitio entero.
+
+   La marca elige cuatro colores (`config/marca.ts`) y aquí se convierte en todo
+   lo que necesita una página: el texto, el texto suave, los bordes, los fondos
+   claros, el azul de los enlaces y el bloque oscuro del pie.
+
+   El truco es que **los tonos derivados se calculan, no se escriben**: salen de
+   mezclar los cuatro de la marca con blanco. Así un proyecto no puede dejar el
+   sitio ilegible por elegir mal un gris, y cambiar la marca no obliga a revisar
+   veinte tonos a mano. Y si un día la marca trae una paleta entera con sus
+   grises, se cambia este bloque y nada más.
+
+   Se declaran con `@theme inline`, que es lo que hace que las clases de Tailwind
+   apunten a la variable en lugar de copiar el valor: por eso el color llega
+   hasta el último botón sin tocar ningún componente.
+------------------------------------------------------------------- */
+@theme inline {
+  --font-sans: var(
+    --fuente-marca,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif
+  );
+
+  --color-tinta: var(--marca-tinta);
+  --color-tinta-suave: var(--marca-tinta-suave);
+  --color-acento: var(--marca-acento);
+  --color-acento-suave: var(--marca-acento-suave);
+  --color-marino: var(--marca-marino);
+  --color-lienzo: var(--marca-lienzo);
+  --color-linea: var(--marca-linea);
+
+  /* La sombra de las tarjetas, sacada de la tinta de la marca y no de un gris
+     escrito a mano: así una marca clara no arrastra una sombra que era de otra.
+     Es `inline` como el resto, así que la clase lleva la mezcla, no el valor. */
+  --shadow-soft:
+    0 1px 2px color-mix(in srgb, var(--marca-tinta) 5%, transparent),
+    0 12px 32px -18px color-mix(in srgb, var(--marca-tinta) 22%, transparent);
+}
+
+:root {
+  /* El texto que no es el principal: descripciones, fechas, notas al pie. */
+  --marca-tinta-suave: color-mix(in srgb, var(--marca-tinta) 62%, #fff);
+  /* El tinte del acento, para fondos suaves y etiquetas. */
+  --marca-acento-suave: color-mix(in srgb, var(--marca-acento) 9%, #fff);
+  /* Los bordes de 1px, que son los que dan estructura sin dibujar cajas. */
+  --marca-linea: color-mix(in srgb, var(--marca-tinta) 12%, #fff);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: var(--marca-tinta);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--marca-acento) 18%, white);
+    color: var(--marca-tinta);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--marca-acento);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* El contenedor único: un solo ancho y un solo aire lateral para todo el sitio.
+   Existe para que ninguna sección se invente el suyo, que es como se acaba con
+   una página que se ve desalineada sección a sección. */
+@utility contenedor {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+/* ------------------------------------------------------------------
+   La banda oscura: el corte a sangre que separa el contenido del cierre.
+
+   Lleva tinta plana, la textura de puntos que comparten todos los bloques
+   oscuros y un halo de acento descentrado, que es lo que evita que el bloque se
+   lea como un rectángulo muerto. El halo va al lado contrario del texto.
+------------------------------------------------------------------- */
+.banda {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: var(--marca-marino);
+  color: #ffffff;
+}
+
+.banda-halo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    46% 64% at 76% 18%,
+    color-mix(in srgb, var(--marca-acento) 32%, transparent),
+    transparent 70%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

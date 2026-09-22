@@ -1,0 +1,21 @@
+# Dependencias
+node_modules
+
+# Construcción
+.next
+out
+build
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# Entorno: los archivos reales nunca se suben. La plantilla sí.
+.env
+.env*.local
+
+# Andamiaje del entorno de desarrollo
+.freebuff/
+
+# Sistema
+.DS_Store
+*.pem
+npm-debug.log*

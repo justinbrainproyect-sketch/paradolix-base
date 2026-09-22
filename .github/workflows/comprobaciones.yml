@@ -1,0 +1,68 @@
+name: Comprobaciones
+
+# Se ejecuta en cada push, a cualquier rama, y en cada pull request. Un push no
+# lleva rama a propósito: en un repositorio de una sola persona es normal trabajar
+# en `main`, y lo que interesa es que **todo lo que entra** pase por aquí.
+on:
+  push:
+  pull_request:
+
+# Un push detrás de otro cancela la ejecución anterior de la misma rama: lo que
+# importa es el estado del último commit.
+concurrency:
+  group: comprobaciones-${{ github.ref }}
+  cancel-in-progress: true
+
+# El flujo no escribe nada: lee el código y compila. Declararlo cuesta una línea
+# y evita que una acción de terceros pueda hacer algo más.
+permissions:
+  contents: read
+
+jobs:
+  # El trabajo rápido: tipos y los chequeos, que no compilan la aplicación
+  # entera. Es el que da la respuesta en menos de un minuto y el que dice **qué**
+  # falla, con el informe completo de cada comprobación.
+  comprobaciones:
+    name: Tipos y chequeos
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # La versión de Node es la del destino, no la del portátil: Vercel
+      # construye con la 22, y probar aquí con otra sería comprobar algo que no es
+      # lo que se va a desplegar.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` y no `npm install`: instala exactamente el `package-lock.json`.
+      # Es lo que hace un despliegue, y si el bloqueo y el `package.json` se han
+      # desincronizado, falla aquí y no en Vercel.
+      - run: npm ci
+
+      - run: npm run typecheck
+      - run: npm run prebuild
+
+  # Y el ensayo del despliegue: el comando exacto que ejecuta Vercel, con su
+  # `prebuild` dentro. Repite los chequeos a propósito —Vercel los ejecuta igual, y
+  # este trabajo existe para replicar lo que hace Vercel, no para ser eficiente—.
+  # Lo que añade es lo que el trabajo rápido no puede ver: que la aplicación
+  # entera compile.
+  #
+  # Y se compila **sin `.env.local`**, que es como compila Vercel: si algo
+  # dependiera de una variable que solo existe en el portátil, se rompería aquí
+  # antes que en producción.
+  build:
+    name: Build de producción
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
